@@ -15,6 +15,16 @@ const latestScryptOptions = {
 
 export class StellarKeystore {
     /**
+     * Retrieves a public key from a keystore file.
+     * @param file
+     * @returns {Promise<StellarSdk.Keypair>}
+     */
+    async publicKey(file) {
+        const fileData = await this._fileContents(file);
+        return fileData.address;
+    }
+
+    /**
      * Retrieves a stellar keypair from a keystore file.
      * @param file
      * @param password
@@ -42,10 +52,11 @@ export class StellarKeystore {
      * Creates a keystore file (using a random keypair) and downloads it.
      * @param password
      * @param filename
+     * @param [keypair]
      * @returns {Promise<StellarSdk.Keypair>}
      */
-    async createAndDownload(password, filename) {
-        const createdData = await this.create(password);
+    async createAndDownload(password, filename, keypair) {
+        const createdData = await this.create(password, keypair);
 
         this._download(filename, JSON.stringify(createdData.fileData));
 
@@ -55,10 +66,11 @@ export class StellarKeystore {
     /**
      * Creates a keystore file's contents using a provided password and a random keypair. Returns a json object representing the keypair file.
      * @param password
+     * @param [keypair]
      * @returns {Promise<{keypair: StellarSdk.Keypair, fileData: {}}>}
      */
-    async create(password) {
-        const newKeypair = StellarSdk.Keypair.random();
+    async create(password, keypair) {
+        const newKeypair = keypair || StellarSdk.Keypair.random();
         const salt = nacl.randomBytes(32);
         const key = await this._keyFromPassword(password, salt, latestScryptOptions);
         const nonce = this._randomNonce();
