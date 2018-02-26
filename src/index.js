@@ -49,7 +49,7 @@ export class StellarKeystore {
     }
 
     /**
-     * Creates a keystore file (using a random keypair) and downloads it.
+     * Creates a keystore file (using the proided keypiar or a random keypair) and downloads it.
      * @param password
      * @param filename
      * @param [keypair]
@@ -64,7 +64,7 @@ export class StellarKeystore {
     }
 
     /**
-     * Creates a keystore file's contents using a provided password and a random keypair. Returns a json object representing the keypair file.
+     * Creates a keystore file's contents using a provided password and the provided keypair or random keypair. Returns a json object representing the keypair file.
      * @param password
      * @param [keypair]
      * @returns {Promise<{keypair: StellarSdk.Keypair, fileData: {}}>}
