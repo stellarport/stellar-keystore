@@ -44,24 +44,37 @@ var StellarKeystore = exports.StellarKeystore = function () {
 
     /**
      * Retrieves a public key from a keystore file.
-     * @param file
+     * @param keystore<Blob|Object>
      * @returns {Promise<StellarSdk.Keypair>}
      */
     StellarKeystore.prototype.publicKey = function () {
-        var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(file) {
-            var fileData;
+        var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(keystore) {
+            var keystoreData;
             return regeneratorRuntime.wrap(function _callee$(_context) {
                 while (1) {
                     switch (_context.prev = _context.next) {
                         case 0:
-                            _context.next = 2;
-                            return this._fileContents(file);
+                            if (!(keystore instanceof Blob)) {
+                                _context.next = 6;
+                                break;
+                            }
 
-                        case 2:
-                            fileData = _context.sent;
-                            return _context.abrupt('return', fileData.address);
+                            _context.next = 3;
+                            return this._fileContents(keystore);
 
-                        case 4:
+                        case 3:
+                            _context.t0 = _context.sent;
+                            _context.next = 7;
+                            break;
+
+                        case 6:
+                            _context.t0 = keystore;
+
+                        case 7:
+                            keystoreData = _context.t0;
+                            return _context.abrupt('return', keystoreData.address);
+
+                        case 9:
                         case 'end':
                             return _context.stop();
                     }
@@ -78,52 +91,65 @@ var StellarKeystore = exports.StellarKeystore = function () {
 
     /**
      * Retrieves a stellar keypair from a keystore file.
-     * @param file
+     * @param keystore<Blob|Object>
      * @param password
      * @returns {Promise<StellarSdk.Keypair>}
      */
 
 
     StellarKeystore.prototype.keypair = function () {
-        var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(file, password) {
-            var fileData, key, secretKey, keypair;
+        var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(keystore, password) {
+            var keystoreData, key, secretKey, keypair;
             return regeneratorRuntime.wrap(function _callee2$(_context2) {
                 while (1) {
                     switch (_context2.prev = _context2.next) {
                         case 0:
-                            _context2.next = 2;
-                            return this._fileContents(file);
+                            if (!(keystore instanceof Blob)) {
+                                _context2.next = 6;
+                                break;
+                            }
 
-                        case 2:
-                            fileData = _context2.sent;
-                            _context2.next = 5;
-                            return this._keyFromPassword(password, _tweetnaclUtil2.default.decodeBase64(fileData.crypto.salt), fileData.crypto.scryptOptions);
+                            _context2.next = 3;
+                            return this._fileContents(keystore);
 
-                        case 5:
+                        case 3:
+                            _context2.t0 = _context2.sent;
+                            _context2.next = 7;
+                            break;
+
+                        case 6:
+                            _context2.t0 = keystore;
+
+                        case 7:
+                            keystoreData = _context2.t0;
+                            _context2.next = 10;
+                            return this._keyFromPassword(password, _tweetnaclUtil2.default.decodeBase64(keystoreData.crypto.salt), keystoreData.crypto.scryptOptions);
+
+                        case 10:
                             key = _context2.sent;
-                            secretKey = _tweetnacl2.default.secretbox.open(_tweetnaclUtil2.default.decodeBase64(fileData.crypto.ciphertext), _tweetnaclUtil2.default.decodeBase64(fileData.crypto.nonce), key);
+                            secretKey = _tweetnacl2.default.secretbox.open(_tweetnaclUtil2.default.decodeBase64(keystoreData.crypto.ciphertext), _tweetnaclUtil2.default.decodeBase64(keystoreData.crypto.nonce), key);
 
                             if (secretKey) {
-                                _context2.next = 9;
+                                _context2.next = 14;
                                 break;
                             }
 
                             throw new Error('Decryption failed. The file or password supplied is invalid.');
 
-                        case 9:
+                        case 14:
                             keypair = StellarSdk.Keypair.fromSecret(_tweetnaclUtil2.default.encodeUTF8(secretKey));
 
                             if (!(keypair.publicKey() !== fileData.address)) {
-                                _context2.next = 12;
+                                _context2.next = 17;
                                 break;
                             }
 
                             throw new Error('The supplied keystore file inconsistent - public key does not match secret key.');
 
-                        case 12:
+                        case 17:
                             return _context2.abrupt('return', keypair);
 
-                        case 13:
+                        case 18:
                         case 'end':
                             return _context2.stop();
                     }
