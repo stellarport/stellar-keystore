@@ -16,24 +16,24 @@ const latestScryptOptions = {
 export class StellarKeystore {
     /**
      * Retrieves a public key from a keystore file.
-     * @param file
+     * @param keystore<Blob|Object>
      * @returns {Promise<StellarSdk.Keypair>}
      */
-    async publicKey(file) {
-        const fileData = await this._fileContents(file);
-        return fileData.address;
+    async publicKey(keystore) {
+        const keystoreData = keystore instanceof Blob ? await this._fileContents(keystore) : keystore;
+        return keystoreData.address;
     }
 
     /**
      * Retrieves a stellar keypair from a keystore file.
-     * @param file
+     * @param keystore<Blob|Object>
      * @param password
      * @returns {Promise<StellarSdk.Keypair>}
      */
-    async keypair(file, password) {
-        const fileData = await this._fileContents(file);
-        const key = await this._keyFromPassword(password, naclUtil.decodeBase64(fileData.crypto.salt), fileData.crypto.scryptOptions);
-        const secretKey = nacl.secretbox.open(naclUtil.decodeBase64(fileData.crypto.ciphertext), naclUtil.decodeBase64(fileData.crypto.nonce), key);
+    async keypair(keystore, password) {
+        const keystoreData = keystore instanceof Blob ? await this._fileContents(keystore) : keystore;
+        const key = await this._keyFromPassword(password, naclUtil.decodeBase64(keystoreData.crypto.salt), keystoreData.crypto.scryptOptions);
+        const secretKey = nacl.secretbox.open(naclUtil.decodeBase64(keystoreData.crypto.ciphertext), naclUtil.decodeBase64(keystoreData.crypto.nonce), key);
 
         if (!secretKey) {
             throw new Error('Decryption failed. The file or password supplied is invalid.');
