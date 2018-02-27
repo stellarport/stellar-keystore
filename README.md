@@ -12,7 +12,7 @@ as well as retrieve a stellar keypair given a keystore wallet/password combinati
 
 ## How does stellar-keystore accomplish this?
 For more information on the internals please see:
-[stellar-keystore third party audit](https://github.com/stellarport/stellar-keystore/audit.pdf)
+[stellar-keystore third party audit](https://github.com/stellarport/stellar-keystore/blob/master/audit.pdf)
 
 ## Getting Started
 
