@@ -139,7 +139,7 @@ var StellarKeystore = exports.StellarKeystore = function () {
                         case 14:
                             keypair = StellarSdk.Keypair.fromSecret(_tweetnaclUtil2.default.encodeUTF8(secretKey));
 
-                            if (!(keypair.publicKey() !== fileData.address)) {
+                            if (!(keypair.publicKey() !== keystoreData.address)) {
                                 _context2.next = 17;
                                 break;
                             }
@@ -187,7 +187,7 @@ var StellarKeystore = exports.StellarKeystore = function () {
                             createdData = _context3.sent;
 
 
-                            this._download(filename, JSON.stringify(createdData.fileData));
+                            this._download(filename, JSON.stringify(createdData.walletData));
 
                             return _context3.abrupt('return', createdData.keypair);
 
@@ -232,7 +232,7 @@ var StellarKeystore = exports.StellarKeystore = function () {
                             ciphertext = _tweetnacl2.default.secretbox(_tweetnaclUtil2.default.decodeUTF8(newKeypair.secret()), nonce, key);
                             return _context4.abrupt('return', {
                                 keypair: newKeypair,
-                                fileData: {
+                                walletData: {
                                     version: version,
                                     address: newKeypair.publicKey(),
                                     crypto: {

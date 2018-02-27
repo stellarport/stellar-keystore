@@ -41,7 +41,7 @@ export class StellarKeystore {
 
         const keypair = StellarSdk.Keypair.fromSecret(naclUtil.encodeUTF8(secretKey));
 
-        if (keypair.publicKey() !== fileData.address) {
+        if (keypair.publicKey() !== keystoreData.address) {
             throw new Error('The supplied keystore file inconsistent - public key does not match secret key.');
         }
 
@@ -58,7 +58,7 @@ export class StellarKeystore {
     async createAndDownload(password, filename, keypair) {
         const createdData = await this.create(password, keypair);
 
-        this._download(filename, JSON.stringify(createdData.fileData));
+        this._download(filename, JSON.stringify(createdData.walletData));
 
         return createdData.keypair;
     }
@@ -77,7 +77,7 @@ export class StellarKeystore {
         const ciphertext = nacl.secretbox(naclUtil.decodeUTF8(newKeypair.secret()), nonce, key);
         return {
             keypair: newKeypair,
-            fileData: {
+            walletData: {
                 version,
                 address: newKeypair.publicKey(),
                 crypto: {
