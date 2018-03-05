@@ -37,6 +37,8 @@ create('someRandomPassword', keypair);
 ```
 
 ### createAndDownload()
+**This Method is Deprecated**
+**Instead of using this method directly, we recommend using the create() method and then something like [file saver](https://github.com/eligrey/FileSaver.js/) to actually download the file**
 Creates a keystore file in the same manner as `create()` and downloads it.
 
 Use like so:
