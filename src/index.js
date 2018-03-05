@@ -50,6 +50,7 @@ export class StellarKeystore {
 
     /**
      * Creates a keystore file (using the proided keypiar or a random keypair) and downloads it.
+     * @deprecated
      * @param password
      * @param filename
      * @param [keypair]
