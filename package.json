@@ -1,6 +1,6 @@
 {
   "name": "stellar-keystore",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "A library to aid in the generation of stellar keystore files",
   "main": "dist/index.js",
   "scripts": {

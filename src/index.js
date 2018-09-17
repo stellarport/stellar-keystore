@@ -19,9 +19,11 @@ export class StellarKeystore {
      * @param keystore<Blob|Object>
      * @returns {Promise<StellarSdk.Keypair>}
      */
-    async publicKey(keystore) {
-        const keystoreData = keystore instanceof Blob ? await this._fileContents(keystore) : keystore;
-        return keystoreData.address;
+    publicKey(keystore) {
+        return this._fileContents(keystore)
+            .then(keystoreData => {
+                return keystoreData.address;
+            });
     }
 
     /**
@@ -30,22 +32,28 @@ export class StellarKeystore {
      * @param password
      * @returns {Promise<StellarSdk.Keypair>}
      */
-    async keypair(keystore, password) {
-        const keystoreData = keystore instanceof Blob ? await this._fileContents(keystore) : keystore;
-        const key = await this._keyFromPassword(password, naclUtil.decodeBase64(keystoreData.crypto.salt), keystoreData.crypto.scryptOptions);
-        const secretKey = nacl.secretbox.open(naclUtil.decodeBase64(keystoreData.crypto.ciphertext), naclUtil.decodeBase64(keystoreData.crypto.nonce), key);
+    keypair(keystore, password) {
+        let keystoreData;
+        return this._fileContents(keystore)
+            .then(_keystoreData => {
+                keystoreData = _keystoreData;
+                return this._keyFromPassword(password, naclUtil.decodeBase64(keystoreData.crypto.salt), keystoreData.crypto.scryptOptions);
+            })
+            .then(key => {
+                const secretKey = nacl.secretbox.open(naclUtil.decodeBase64(keystoreData.crypto.ciphertext), naclUtil.decodeBase64(keystoreData.crypto.nonce), key);
 
-        if (!secretKey) {
-            throw new Error('Decryption failed. The file or password supplied is invalid.');
-        }
+                if (!secretKey) {
+                    throw new Error('Decryption failed. The file or password supplied is invalid.');
+                }
 
-        const keypair = StellarSdk.Keypair.fromSecret(naclUtil.encodeUTF8(secretKey));
+                const keypair = StellarSdk.Keypair.fromSecret(naclUtil.encodeUTF8(secretKey));
 
-        if (keypair.publicKey() !== keystoreData.address) {
-            throw new Error('The supplied keystore file inconsistent - public key does not match secret key.');
-        }
+                if (keypair.publicKey() !== keystoreData.address) {
+                    throw new Error('The supplied keystore file inconsistent - public key does not match secret key.');
+                }
 
-        return keypair;
+                return keypair;
+            })
     }
 
     /**
@@ -56,12 +64,13 @@ export class StellarKeystore {
      * @param [keypair]
      * @returns {Promise<StellarSdk.Keypair>}
      */
-    async createAndDownload(password, filename, keypair) {
-        const createdData = await this.create(password, keypair);
+    createAndDownload(password, filename, keypair) {
+        return this.create(password, keypair)
+            .then(createdData => {
+                this._download(filename, JSON.stringify(createdData.walletData));
 
-        this._download(filename, JSON.stringify(createdData.walletData));
-
-        return createdData.keypair;
+                return createdData.keypair;
+            });
     }
 
     /**
@@ -70,25 +79,28 @@ export class StellarKeystore {
      * @param [keypair]
      * @returns {Promise<{keypair: StellarSdk.Keypair, fileData: {}}>}
      */
-    async create(password, keypair) {
+    create(password, keypair) {
         const newKeypair = keypair || StellarSdk.Keypair.random();
         const salt = nacl.randomBytes(32);
-        const key = await this._keyFromPassword(password, salt, latestScryptOptions);
-        const nonce = this._randomNonce();
-        const ciphertext = nacl.secretbox(naclUtil.decodeUTF8(newKeypair.secret()), nonce, key);
-        return {
-            keypair: newKeypair,
-            walletData: {
-                version,
-                address: newKeypair.publicKey(),
-                crypto: {
-                    ciphertext: naclUtil.encodeBase64(ciphertext),
-                    nonce: naclUtil.encodeBase64(nonce),
-                    salt: naclUtil.encodeBase64(salt),
-                    scryptOptions: latestScryptOptions
-                }
-            }
-        };
+        return this._keyFromPassword(password, salt, latestScryptOptions)
+            .then(key => {
+                const nonce = this._randomNonce();
+                const ciphertext = nacl.secretbox(naclUtil.decodeUTF8(newKeypair.secret()), nonce, key);
+                return {
+                    keypair: newKeypair,
+                    walletData: {
+                        version,
+                        address: newKeypair.publicKey(),
+                        crypto: {
+                            ciphertext: naclUtil.encodeBase64(ciphertext),
+                            nonce: naclUtil.encodeBase64(nonce),
+                            salt: naclUtil.encodeBase64(salt),
+                            scryptOptions: latestScryptOptions
+                        }
+                    }
+                };
+            });
+
     }
 
     _download(filename, text) {
@@ -105,6 +117,10 @@ export class StellarKeystore {
     }
 
     _fileContents(file) {
+        if (!(file instanceof Blob)) {
+            return file;
+        }
+
         const fileReader = new FileReader();
 
         fileReader.readAsText(file);
