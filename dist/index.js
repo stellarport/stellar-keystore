@@ -150,7 +150,7 @@ var StellarKeystore = exports.StellarKeystore = function () {
 
     StellarKeystore.prototype._fileContents = function _fileContents(file) {
         if (!(file instanceof Blob)) {
-            return file;
+            return Promise.resolve(file);
         }
 
         var fileReader = new FileReader();

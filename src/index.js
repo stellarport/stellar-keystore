@@ -118,7 +118,7 @@ export class StellarKeystore {
 
     _fileContents(file) {
         if (!(file instanceof Blob)) {
-            return file;
+            return Promise.resolve(file);
         }
 
         const fileReader = new FileReader();
