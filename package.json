@@ -1,6 +1,6 @@
 {
   "name": "stellar-keystore",
-  "version": "1.2.2",
+  "version": "1.2.7",
   "description": "A library to aid in the generation of stellar keystore files",
   "main": "dist/index.js",
   "scripts": {
@@ -34,6 +34,7 @@
   "dependencies": {
     "scrypt-async": "^2.0.0",
     "stellar-sdk": "0.7.3",
+    "tweetnacl": "^1.0.1",
     "tweetnacl-util": "0.15.0"
   }
 }

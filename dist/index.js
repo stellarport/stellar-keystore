@@ -23,8 +23,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var version = 'stellarport-1-20-2018';
@@ -47,47 +45,11 @@ var StellarKeystore = exports.StellarKeystore = function () {
      * @param keystore<Blob|Object>
      * @returns {Promise<StellarSdk.Keypair>}
      */
-    StellarKeystore.prototype.publicKey = function () {
-        var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(keystore) {
-            var keystoreData;
-            return regeneratorRuntime.wrap(function _callee$(_context) {
-                while (1) {
-                    switch (_context.prev = _context.next) {
-                        case 0:
-                            if (!(keystore instanceof Blob)) {
-                                _context.next = 6;
-                                break;
-                            }
-
-                            _context.next = 3;
-                            return this._fileContents(keystore);
-
-                        case 3:
-                            _context.t0 = _context.sent;
-                            _context.next = 7;
-                            break;
-
-                        case 6:
-                            _context.t0 = keystore;
-
-                        case 7:
-                            keystoreData = _context.t0;
-                            return _context.abrupt('return', keystoreData.address);
-
-                        case 9:
-                        case 'end':
-                            return _context.stop();
-                    }
-                }
-            }, _callee, this);
-        }));
-
-        function publicKey(_x) {
-            return _ref.apply(this, arguments);
-        }
-
-        return publicKey;
-    }();
+    StellarKeystore.prototype.publicKey = function publicKey(keystore) {
+        return this._fileContents(keystore).then(function (keystoreData) {
+            return keystoreData.address;
+        });
+    };
 
     /**
      * Retrieves a stellar keypair from a keystore file.
@@ -97,75 +59,33 @@ var StellarKeystore = exports.StellarKeystore = function () {
      */
 
 
-    StellarKeystore.prototype.keypair = function () {
-        var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(keystore, password) {
-            var keystoreData, key, secretKey, keypair;
-            return regeneratorRuntime.wrap(function _callee2$(_context2) {
-                while (1) {
-                    switch (_context2.prev = _context2.next) {
-                        case 0:
-                            if (!(keystore instanceof Blob)) {
-                                _context2.next = 6;
-                                break;
-                            }
+    StellarKeystore.prototype.keypair = function keypair(keystore, password) {
+        var _this = this;
 
-                            _context2.next = 3;
-                            return this._fileContents(keystore);
+        var keystoreData = void 0;
+        return this._fileContents(keystore).then(function (_keystoreData) {
+            keystoreData = _keystoreData;
+            return _this._keyFromPassword(password, _tweetnaclUtil2.default.decodeBase64(keystoreData.crypto.salt), keystoreData.crypto.scryptOptions);
+        }).then(function (key) {
+            var secretKey = _tweetnacl2.default.secretbox.open(_tweetnaclUtil2.default.decodeBase64(keystoreData.crypto.ciphertext), _tweetnaclUtil2.default.decodeBase64(keystoreData.crypto.nonce), key);
 
-                        case 3:
-                            _context2.t0 = _context2.sent;
-                            _context2.next = 7;
-                            break;
+            if (!secretKey) {
+                throw new Error('Decryption failed. The file or password supplied is invalid.');
+            }
 
-                        case 6:
-                            _context2.t0 = keystore;
+            var keypair = StellarSdk.Keypair.fromSecret(_tweetnaclUtil2.default.encodeUTF8(secretKey));
 
-                        case 7:
-                            keystoreData = _context2.t0;
-                            _context2.next = 10;
-                            return this._keyFromPassword(password, _tweetnaclUtil2.default.decodeBase64(keystoreData.crypto.salt), keystoreData.crypto.scryptOptions);
+            if (keypair.publicKey() !== keystoreData.address) {
+                throw new Error('The supplied keystore file inconsistent - public key does not match secret key.');
+            }
 
-                        case 10:
-                            key = _context2.sent;
-                            secretKey = _tweetnacl2.default.secretbox.open(_tweetnaclUtil2.default.decodeBase64(keystoreData.crypto.ciphertext), _tweetnaclUtil2.default.decodeBase64(keystoreData.crypto.nonce), key);
-
-                            if (secretKey) {
-                                _context2.next = 14;
-                                break;
-                            }
-
-                            throw new Error('Decryption failed. The file or password supplied is invalid.');
-
-                        case 14:
-                            keypair = StellarSdk.Keypair.fromSecret(_tweetnaclUtil2.default.encodeUTF8(secretKey));
-
-                            if (!(keypair.publicKey() !== keystoreData.address)) {
-                                _context2.next = 17;
-                                break;
-                            }
-
-                            throw new Error('The supplied keystore file inconsistent - public key does not match secret key.');
-
-                        case 17:
-                            return _context2.abrupt('return', keypair);
-
-                        case 18:
-                        case 'end':
-                            return _context2.stop();
-                    }
-                }
-            }, _callee2, this);
-        }));
-
-        function keypair(_x2, _x3) {
-            return _ref2.apply(this, arguments);
-        }
-
-        return keypair;
-    }();
+            return keypair;
+        });
+    };
 
     /**
      * Creates a keystore file (using the proided keypiar or a random keypair) and downloads it.
+     * @deprecated
      * @param password
      * @param filename
      * @param [keypair]
@@ -173,38 +93,15 @@ var StellarKeystore = exports.StellarKeystore = function () {
      */
 
 
-    StellarKeystore.prototype.createAndDownload = function () {
-        var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(password, filename, keypair) {
-            var createdData;
-            return regeneratorRuntime.wrap(function _callee3$(_context3) {
-                while (1) {
-                    switch (_context3.prev = _context3.next) {
-                        case 0:
-                            _context3.next = 2;
-                            return this.create(password, keypair);
+    StellarKeystore.prototype.createAndDownload = function createAndDownload(password, filename, keypair) {
+        var _this2 = this;
 
-                        case 2:
-                            createdData = _context3.sent;
+        return this.create(password, keypair).then(function (createdData) {
+            _this2._download(filename, JSON.stringify(createdData.walletData));
 
-
-                            this._download(filename, JSON.stringify(createdData.walletData));
-
-                            return _context3.abrupt('return', createdData.keypair);
-
-                        case 5:
-                        case 'end':
-                            return _context3.stop();
-                    }
-                }
-            }, _callee3, this);
-        }));
-
-        function createAndDownload(_x4, _x5, _x6) {
-            return _ref3.apply(this, arguments);
-        }
-
-        return createAndDownload;
-    }();
+            return createdData.keypair;
+        });
+    };
 
     /**
      * Creates a keystore file's contents using a provided password and the provided keypair or random keypair. Returns a json object representing the keypair file.
@@ -214,50 +111,29 @@ var StellarKeystore = exports.StellarKeystore = function () {
      */
 
 
-    StellarKeystore.prototype.create = function () {
-        var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(password, keypair) {
-            var newKeypair, salt, key, nonce, ciphertext;
-            return regeneratorRuntime.wrap(function _callee4$(_context4) {
-                while (1) {
-                    switch (_context4.prev = _context4.next) {
-                        case 0:
-                            newKeypair = keypair || StellarSdk.Keypair.random();
-                            salt = _tweetnacl2.default.randomBytes(32);
-                            _context4.next = 4;
-                            return this._keyFromPassword(password, salt, latestScryptOptions);
+    StellarKeystore.prototype.create = function create(password, keypair) {
+        var _this3 = this;
 
-                        case 4:
-                            key = _context4.sent;
-                            nonce = this._randomNonce();
-                            ciphertext = _tweetnacl2.default.secretbox(_tweetnaclUtil2.default.decodeUTF8(newKeypair.secret()), nonce, key);
-                            return _context4.abrupt('return', {
-                                keypair: newKeypair,
-                                walletData: {
-                                    version: version,
-                                    address: newKeypair.publicKey(),
-                                    crypto: {
-                                        ciphertext: _tweetnaclUtil2.default.encodeBase64(ciphertext),
-                                        nonce: _tweetnaclUtil2.default.encodeBase64(nonce),
-                                        salt: _tweetnaclUtil2.default.encodeBase64(salt),
-                                        scryptOptions: latestScryptOptions
-                                    }
-                                }
-                            });
-
-                        case 8:
-                        case 'end':
-                            return _context4.stop();
+        var newKeypair = keypair || StellarSdk.Keypair.random();
+        var salt = _tweetnacl2.default.randomBytes(32);
+        return this._keyFromPassword(password, salt, latestScryptOptions).then(function (key) {
+            var nonce = _this3._randomNonce();
+            var ciphertext = _tweetnacl2.default.secretbox(_tweetnaclUtil2.default.decodeUTF8(newKeypair.secret()), nonce, key);
+            return {
+                keypair: newKeypair,
+                walletData: {
+                    version: version,
+                    address: newKeypair.publicKey(),
+                    crypto: {
+                        ciphertext: _tweetnaclUtil2.default.encodeBase64(ciphertext),
+                        nonce: _tweetnaclUtil2.default.encodeBase64(nonce),
+                        salt: _tweetnaclUtil2.default.encodeBase64(salt),
+                        scryptOptions: latestScryptOptions
                     }
                 }
-            }, _callee4, this);
-        }));
-
-        function create(_x7, _x8) {
-            return _ref4.apply(this, arguments);
-        }
-
-        return create;
-    }();
+            };
+        });
+    };
 
     StellarKeystore.prototype._download = function _download(filename, text) {
         var element = document.createElement('a');
@@ -273,6 +149,10 @@ var StellarKeystore = exports.StellarKeystore = function () {
     };
 
     StellarKeystore.prototype._fileContents = function _fileContents(file) {
+        if (!(file instanceof Blob)) {
+            return Promise.resolve(file);
+        }
+
         var fileReader = new FileReader();
 
         fileReader.readAsText(file);
