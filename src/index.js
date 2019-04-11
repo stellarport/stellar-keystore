@@ -15,7 +15,7 @@ const latestScryptOptions = {
 
 export class StellarKeystore {
     /**
-     * Retrieves a public key from a keystore file.
+     * Retrieves a public key from a keystore file or json object.
      * @param keystore<Blob|Object>
      * @returns {Promise<StellarSdk.Keypair>}
      */
@@ -27,9 +27,9 @@ export class StellarKeystore {
     }
 
     /**
-     * Retrieves a stellar keypair from a keystore file.
+     * Retrieves a stellar keypair from a keystore file or json object.
      * @param keystore<Blob|Object>
-     * @param password
+     * @param password<string>
      * @returns {Promise<StellarSdk.Keypair>}
      */
     keypair(keystore, password) {
@@ -57,7 +57,7 @@ export class StellarKeystore {
     }
 
     /**
-     * Creates a keystore file (using the proided keypiar or a random keypair) and downloads it.
+     * Creates a keystore file (using the provided keypair or a random keypair) and downloads it.
      * @deprecated
      * @param password
      * @param filename
@@ -117,7 +117,8 @@ export class StellarKeystore {
     }
 
     _fileContents(file) {
-        if (!(file instanceof Blob)) {
+        // Check if this is a blob (for browser use).
+        if (!(file.hasOwnProperty('size'))) {
             return Promise.resolve(file);
         }
 
