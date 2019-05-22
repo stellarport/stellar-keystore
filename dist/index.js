@@ -150,7 +150,7 @@ var StellarKeystore = exports.StellarKeystore = function () {
 
     StellarKeystore.prototype._fileContents = function _fileContents(file) {
         // Check if this is a blob (for browser use).
-        if (!file.hasOwnProperty('size')) {
+        if (!file.size || isNaN(parseInt(file.size))) {
             return Promise.resolve(file);
         }
 
